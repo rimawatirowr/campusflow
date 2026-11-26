@@ -141,7 +141,7 @@ input[type=range]{width:100%;accent-color:var(--rose)}
 .login .r{padding:48px;display:flex;flex-direction:column;justify-content:center;gap:18px;max-width:520px;width:100%;margin:auto}
 @media (max-width:860px){.login{grid-template-columns:1fr}.login .l{padding:28px 20px}.login .r{padding:28px max(16px,env(safe-area-inset-left,0px))}}
 </style>
-<div id="app"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script>
+<div id="app"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script><script>
 /* ===== Data demo (contoh, bukan data resmi) ===== */
 const ME={nama:'Rimawati',nim:'240511184',kelas:'TI24D',prodi:'Teknik Informatika',smt:5,ta:'Ganjil 2026/2027',pa:'Dr. Ir. Hendra Setiawan, M.T.'};
 const _n=new Date();const TODAY=new Date(2026,10,25,_n.getHours(),_n.getMinutes()); // Rabu, 25 Nov 2026, jam mengikuti jam perangkat
@@ -400,7 +400,7 @@ const fsz=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/102
 const stamp=()=>{const n=new Date();return new Date(2026,10,25,n.getHours(),n.getMinutes()).toISOString()};
 const fa=i=>{const d=new Date(i);return tgl(d)+', '+d.toTimeString().slice(0,5)+' WIB'};
 const lg=(t,m)=>{(t.log=t.log||[]).push({m,at:stamp()})};
-const SB_URL='',SB_KEY=''; // isi dari Supabase: Project Settings > API (URL + anon/publishable key)
+const SB_URL='https://ukdonrclrqxqgttwxzmc.supabase.co',SB_KEY='sb_publishable_waLdizYXasfuBz5ggcVLyw_AxPHb97C'; // isi dari Supabase: Project Settings > API (URL + anon/publishable key)
 const sb=(SB_URL&&SB_KEY&&window.supabase)?supabase.createClient(SB_URL,SB_KEY):null;
 let UID=null,_tm=null;const BK='tugas-files';
 const row=t=>({id:t.id,user_id:UID,mk:t.mk,judul:t.judul,dl:new Date(t.dl).toISOString(),pri:t.pri,bobot:t.bobot,st:t.st,nilai:t.nilai,ins:t.ins||'',note:t.note||'',link:t.link||'',ver:t.ver||0,sent_at:t.sentAt||null,dirty:!!t.dirty,files:t.files||[],log:t.log||[]});
