@@ -121,6 +121,7 @@ input[type=range]{width:100%;accent-color:var(--rose)}
 .modal>div{background:var(--card);border-radius:18px;padding:22px;width:min(520px,100%);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .empty{text-align:center;padding:30px;color:var(--mute)}
 .mnav{display:none}
+@media (max-width:860px){#clk{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:1100px){.split{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:860px){
@@ -144,7 +145,7 @@ input[type=range]{width:100%;accent-color:var(--rose)}
 <div id="app"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script><script>
 /* ===== Data demo (contoh, bukan data resmi) ===== */
 const ME={nama:'Rimawati',nim:'240511184',kelas:'TI24D',prodi:'Teknik Informatika',smt:5,ta:'Ganjil 2026/2027',pa:'Dr. Ir. Hendra Setiawan, M.T.'};
-const _n=new Date();const TODAY=new Date(2026,10,25,_n.getHours(),_n.getMinutes()); // Rabu, 25 Nov 2026, jam mengikuti jam perangkat
+let TODAY=new Date(); // tanggal & jam mengikuti perangkat secara real-time
 const HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const BLN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MK=[
@@ -253,7 +254,7 @@ function render(){
    <div class="navsep"><button class="navl ${act==='arsip'?'on':''}" data-go="arsip">${ico('arch')}Arsip Dokumen</button>
    <button class="navl" data-act="logout">${ico('out')}Keluar</button></div></aside>
   <main><header class="top">
-   <div class="crumb" id="crumb"></div><div class="sp"></div>
+   <div class="crumb" id="crumb"></div><div class="sp"></div><span class="chip" id="clk" style="padding:6px 12px"></span>
    <label class="search">${ico('search','sm')}<input id="q" type="search" placeholder="Cari mata kuliah, tugas…" aria-label="Cari"><kbd>Ctrl K</kbd></label>
    <button class="ib" data-act="theme" aria-label="Ganti tema">${ico(document.documentElement.getAttribute('data-theme')==='dark'?'sun':'moon')}</button>
    <button class="ib" data-act="notif" aria-label="Notifikasi">${ico('bell')}<span class="dot"></span></button>
@@ -263,7 +264,7 @@ function render(){
   const v=$('#view');
   const fn=PAGES[base]||PAGES.dashboard;
   const out=fn(r.split('-')[1]);
-  v.innerHTML=out.html;$('#crumb').innerHTML=out.crumb;
+  v.innerHTML=out.html;$('#crumb').innerHTML=out.crumb;clk();
   document.title='CampusFlow Mahasiswa';
   if(out.after)out.after();
   if(!S._noscroll)window.scrollTo(0,0);S._noscroll=0;
@@ -348,19 +349,19 @@ PAGES.mk=(id)=>{
 PAGES.kalender=()=>{
   const view=S.tab.cal||'minggu';
   
-  const days=[0,1,2,3,4].map(i=>{return new Date(2026,10,23+i)});
+  const mo0=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-((TODAY.getDay()+6)%7)),days=[0,1,2,3,4].map(i=>new Date(mo0.getFullYear(),mo0.getMonth(),mo0.getDate()+i)),Y=TODAY.getFullYear(),MO=TODAY.getMonth(),wk=Math.min(16,Math.max(1,Math.floor((TODAY-new Date(2026,7,10))/6048e5)+1));
   const evOf=d=>[...MK.filter(m=>m.hari===d.getDay()).map(m=>({t:m.nama,j:m.jam.replace('-',' – '),s:m.ruang+' · '+m.dosen.split(',')[0],k:'kl',past:d.toDateString()===TODAY.toDateString()&&m.jam.slice(6)<TODAY.toTimeString().slice(0,5)})),...EVENTS.filter(e=>e.d.toDateString()===d.toDateString()).map(e=>({t:e.t,j:e.j,s:e.k==='dl'?'Deadline tugas':'Praktikum',k:e.k}))].sort((a,b)=>a.j.localeCompare(b.j));
   let main='';
-  if(view==='minggu'){main=`<div class="wk">${days.map(d=>{const ev=evOf(d);const t=d.getDate()===25;return`<div class="col"><div class="row between"><b>${HARI[d.getDay()]}</b><span class="sm mut">${d.getDate()} Nov${t?' · Hari ini':''}</span></div>${ev.map(e=>`<div class="ev-c ${e.k==='dl'?'dl':e.k==='pr'?'pr':e.past?'done':''}"><span class="sm mut num">${e.j}</span><b>${e.t}</b><span class="sm mut">${e.s}</span></div>`).join('')||'<div class="sm mut">Tidak ada agenda</div>'}</div>`}).join('')}</div>`}
-  else{const all=[];for(let i=0;i<14;i++){const d=new Date(2026,10,25+i);evOf(d).forEach(e=>all.push([d,e]))}
+  if(view==='minggu'){main=`<div class="wk">${days.map(d=>{const ev=evOf(d);const t=d.toDateString()===TODAY.toDateString();return`<div class="col"><div class="row between"><b>${HARI[d.getDay()]}</b><span class="sm mut">${d.getDate()} ${BLN[d.getMonth()].slice(0,3)}${t?' · Hari ini':''}</span></div>${ev.map(e=>`<div class="ev-c ${e.k==='dl'?'dl':e.k==='pr'?'pr':e.past?'done':''}"><span class="sm mut num">${e.j}</span><b>${e.t}</b><span class="sm mut">${e.s}</span></div>`).join('')||'<div class="sm mut">Tidak ada agenda</div>'}</div>`}).join('')}</div>`}
+  else{const all=[];for(let i=0;i<14;i++){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+i);evOf(d).forEach(e=>all.push([d,e]))}
     main=`<div class="list">${all.map(([d,e])=>`<div class="item"><div class="time">${d.getDate()}<small>${BLN[d.getMonth()].slice(0,3)}</small></div><div style="flex:1;min-width:0"><b>${e.t}</b><div class="sm mut">${HARI[d.getDay()]} · ${e.j} · ${e.s}</div></div>${e.k==='dl'?chip('Deadline','bad'):e.k==='pr'?chip('Praktikum','warn'):chip('Kuliah')}</div>`).join('')}</div>`}
-  const first=new Date(2026,10,1).getDay(),dim=30;
+  const first=new Date(Y,MO,1).getDay(),dim=new Date(Y,MO+1,0).getDate();
   const evd=new Set(EVENTS.map(e=>e.d.getDate()));
-  const mini=`<div class="cal">${['M','S','S','R','K','J','S'].map(x=>`<span>${x}</span>`).join('')}${Array(first).fill('<i></i>').join('')}${Array.from({length:dim},(_,i)=>i+1).map(n=>`<button class="${n===25?'today':evd.has(n)?'ev':''}" data-act="pickday" data-n="${n}">${n}</button>`).join('')}</div>`;
+  const mini=`<div class="cal">${['M','S','S','R','K','J','S'].map(x=>`<span>${x}</span>`).join('')}${Array(first).fill('<i></i>').join('')}${Array.from({length:dim},(_,i)=>i+1).map(n=>`<button class="${n===TODAY.getDate()?'today':evd.has(n)?'ev':''}" data-act="pickday" data-n="${n}">${n}</button>`).join('')}</div>`;
   const html=`<section class="card"><div class="row between" style="gap:16px"><div><div class="row" style="margin-bottom:6px">${chip('Semester '+ME.ta)}</div><h1 class="h1">Kalender & Jadwal Kuliah</h1><p class="mut">Jadwal mingguan, tenggat tugas, dan agenda praktikum. Zona waktu WIB (UTC+7).</p></div><div class="chip ok">Google Calendar: simulasi</div></div></section>
-  <div class="row between"><div class="tabs">${[['minggu','Minggu ini'],['agenda','Agenda']].map(t=>`<button class="tab ${view===t[0]?'on':''}" data-tab="cal:${t[0]}">${t[1]}</button>`).join('')}</div><span class="chip">November 2026 · Minggu ke-16</span></div>
-  <div class="split"><section class="card">${main}</section><div style="display:flex;flex-direction:column;gap:20px"><section class="card"><h2 class="h2" style="margin-bottom:10px">November 2026</h2>${mini}</section>
-  <section class="card"><h2 class="h2" style="margin-bottom:10px">Tenggat pekan ini</h2><div class="list">${TUGAS.length?'':'<div class="empty">Belum ada tugas.</div>'}${TUGAS.filter(t=>t.dl>TODAY&&t.dl<new Date(2026,10,30)).sort((a,b)=>a.dl-b.dl).map(t=>`<button class="item" style="border:0;text-align:left" data-go="tg-${t.id}"><div style="flex:1"><b>${t.judul.split(':')[0]}</b><div class="sm mut">${mk(t.mk).nama}</div></div><span class="sm" style="color:var(--bad);font-weight:600">${sisa(t.dl)}</span></button>`).join('')}</div></section></div></div>`;
+  <div class="row between"><div class="tabs">${[['minggu','Minggu ini'],['agenda','Agenda']].map(t=>`<button class="tab ${view===t[0]?'on':''}" data-tab="cal:${t[0]}">${t[1]}</button>`).join('')}</div><span class="chip">${BLN[MO]} ${Y} · Minggu ke-${wk}</span></div>
+  <div class="split"><section class="card">${main}</section><div style="display:flex;flex-direction:column;gap:20px"><section class="card"><h2 class="h2" style="margin-bottom:10px">${BLN[MO]} ${Y}</h2>${mini}</section>
+  <section class="card"><h2 class="h2" style="margin-bottom:10px">Tenggat pekan ini</h2><div class="list">${TUGAS.length?'':'<div class="empty">Belum ada tugas.</div>'}${TUGAS.filter(t=>t.dl>TODAY&&t.dl<new Date(TODAY.getTime()+7*864e5)).sort((a,b)=>a.dl-b.dl).map(t=>`<button class="item" style="border:0;text-align:left" data-go="tg-${t.id}"><div style="flex:1"><b>${t.judul.split(':')[0]}</b><div class="sm mut">${mk(t.mk).nama}</div></div><span class="sm" style="color:var(--bad);font-weight:600">${sisa(t.dl)}</span></button>`).join('')}</div></section></div></div>`;
   return{html,crumb:cr('Beranda','Kalender')};
 };
 
@@ -397,7 +398,7 @@ const DB={o:null,open(){return this.o||(this.o=new Promise(r=>{try{const q=index
  async get(k){if(MEM[k])return MEM[k];const d=await this.open();if(!d)return;return new Promise(r=>{try{const q=d.transaction('f').objectStore('f').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()}catch(e){r()}})},
  async del(k){delete MEM[k];if(sb&&UID)sb.storage.from(BK).remove([UID+'/'+k]);const d=await this.open();if(!d)return;try{d.transaction('f','readwrite').objectStore('f').delete(k)}catch(e){}}};
 const fsz=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
-const stamp=()=>{const n=new Date();return new Date(2026,10,25,n.getHours(),n.getMinutes()).toISOString()};
+const stamp=()=>new Date().toISOString();
 const fa=i=>{const d=new Date(i);return tgl(d)+', '+d.toTimeString().slice(0,5)+' WIB'};
 const lg=(t,m)=>{(t.log=t.log||[]).push({m,at:stamp()})};
 const SB_URL='https://ukdonrclrqxqgttwxzmc.supabase.co',SB_KEY='sb_publishable_waLdizYXasfuBz5ggcVLyw_AxPHb97C'; // isi dari Supabase: Project Settings > API (URL + anon/publishable key)
@@ -446,7 +447,8 @@ function subAct(x,a){if(!['draft','send','unsend','fdl','frep','fdel','addtg','d
  else{if(!t.files.length){toast('Tambahkan minimal satu berkas dulu.');return true}const o=$('#ori');if(o&&!o.checked){toast('Centang pernyataan orisinalitas dulu.');return true}
   a.disabled=true;a.textContent='Mengirim…';setTimeout(()=>{t.st='dikumpulkan';t.ver=(t.ver||0)+1;t.sentAt=stamp();t.dirty=0;lg(t,(t.ver>1?'Pengumpulan diperbarui':'Tugas dikumpulkan')+' (versi '+t.ver+')');saveT();rr();toast(t.ver>1?'Pengumpulan diperbarui.':'Tugas terkirim, '+fa(t.sentAt)+'.')},700)}
  return true}
-function tgModal(){const m=document.createElement('div');m.className='modal';m.innerHTML=`<form><h2 class="h2">Tambah tugas</h2><label class="f">Judul<input id="gj" type="text" required></label><label class="f">Mata kuliah<select id="gm">${MK.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('')}</select></label><label class="f">Tenggat<input id="gd" type="datetime-local" value="2026-12-02T23:59" required></label><label class="f">Bobot (%)<input id="gb" type="number" min="0" max="100" value="10"></label><label class="f">Prioritas<select id="gp"><option>Normal</option><option>Tinggi</option></select></label><label class="f">Instruksi (opsional)<textarea id="gi" rows="3"></textarea></label><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="gc">Batal</button><button class="btn p">Simpan</button></div></form>`;document.body.append(m);$('#gj').focus();
+function dd7(){const d=new Date(Date.now()+7*864e5),z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T23:59'}
+function tgModal(){const m=document.createElement('div');m.className='modal';m.innerHTML=`<form><h2 class="h2">Tambah tugas</h2><label class="f">Judul<input id="gj" type="text" required></label><label class="f">Mata kuliah<select id="gm">${MK.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('')}</select></label><label class="f">Tenggat<input id="gd" type="datetime-local" value="${dd7()}" required></label><label class="f">Bobot (%)<input id="gb" type="number" min="0" max="100" value="10"></label><label class="f">Prioritas<select id="gp"><option>Normal</option><option>Tinggi</option></select></label><label class="f">Instruksi (opsional)<textarea id="gi" rows="3"></textarea></label><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="gc">Batal</button><button class="btn p">Simpan</button></div></form>`;document.body.append(m);$('#gj').focus();
  $('#gc').onclick=()=>m.remove();m.onclick=e=>{if(e.target===m)m.remove()};
  m.querySelector('form').onsubmit=e=>{e.preventDefault();const j=$('#gj').value.trim();if(!j)return;const t={id:Date.now(),mk:+$('#gm').value,judul:j,dl:new Date($('#gd').value),pri:$('#gp').value,bobot:+$('#gb').value||0,st:'belum',nilai:null,ins:$('#gi').value.trim(),files:[],note:'',link:'',log:[{m:'Tugas dibuat',at:stamp()}]};TUGAS.push(t);saveT();m.remove();go('tg-'+t.id);toast('Tugas ditambahkan.')}}
 
@@ -486,7 +488,7 @@ PAGES.riwayat=()=>{
   const pts=SEM.filter(x=>x.ips);const W=520,H=170,px=i=>40+i*(W-80)/(pts.length-1),py=v=>H-30-(v-3.6)/(4-3.6)*(H-60);
   const line=pts.map((p,i)=>`${i?'L':'M'}${px(i)},${py(p.ips)}`).join(' ');
   const html=`<section class="card"><div class="row between" style="gap:16px"><div><div class="row" style="margin-bottom:6px">${chip('Transkrip & capaian SKS')}</div><h1 class="h1">Riwayat Akademik Semester 1–8</h1><p class="mut">${ME.prodi} · Dosen PA ${ME.pa}</p></div></div></section>
-  <section class="grid g3"><div class="card stat"><span class="l">IPK kumulatif</span><span class="v num">3.82 <small>/ 4.00</small></span><span class="sm" style="color:var(--ok)">Predikat pujian (Cum Laude) jika ≥ 3.50</span></div><div class="card stat"><span class="l">SKS lulus</span><span class="v num">88 <small>/ 144</small></span>${bar(61)}</div><div class="card stat"><span class="l">Semester berjalan</span><span class="v">Semester 5</span><span class="sm mut">${SKS} SKS · pertemuan ke-15 dari 16</span></div></section>
+  <section class="grid g3"><div class="card stat"><span class="l">IPK kumulatif</span><span class="v num">3.82 <small>/ 4.00</small></span><span class="sm" style="color:var(--ok)">Predikat pujian (Cum Laude) jika ≥ 3.50</span></div><div class="card stat"><span class="l">SKS lulus</span><span class="v num">88 <small>/ 144</small></span>${bar(61)}</div><div class="card stat"><span class="l">Semester berjalan</span><span class="v">Semester 5</span><span class="sm mut">${SKS} SKS · pertemuan ke-6 dari 16</span></div></section>
   <section class="card"><h2 class="h2" style="margin-bottom:12px">Timeline studi</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px">${SEM.map(x=>`<button class="item" style="flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1px solid ${x.n==sel?'var(--rose)':'var(--line)'};background:${x.n==sel?'var(--tint)':'var(--bg)'}" data-tab="sem:${x.n}"><b>Sem ${x.n}</b><span class="sm mut">${x.ta}</span><span class="sm"><b class="num">${x.ips?'IPS '+x.ips.toFixed(2):x.plan}</b></span><span class="sm mut">${x.sks} SKS</span>${x.aktif?chip('Aktif','warn'):x.ips?chip('Lulus','ok'):chip('Rencana','gray')}</button>`).join('')}</div></section>
   <section class="card"><h2 class="h2" style="margin-bottom:12px">Semester ${s.n} · ${s.ta}</h2>${s.n===5?`<div class="tbl"><table><thead><tr><th>Kode</th><th>Mata kuliah</th><th>SKS</th><th>Kelas</th><th>Presensi</th><th>Nilai sementara</th></tr></thead><tbody>${MK.map(m=>`<tr><td class="num">${m.kode}</td><td><b>${m.nama}</b><div class="sm mut">${m.dosen.split(',')[0]}</div></td><td class="num">${m.sks}</td><td>${chip(m.kelas,'gray')}</td><td class="num">${pct(m.hdr,m.done)}%</td><td>${m.nilai?chip(grade(m.nilai)[0]+' ('+m.nilai+')','ok'):chip('Belum ada','gray')}</td></tr>`).join('')}</tbody></table></div><p class="sm mut" style="margin-top:10px">Nilai semester 5 bersifat sementara sampai UAS selesai.</p>`:s.ips?`<p>Semester selesai dengan IPS <b class="num">${s.ips.toFixed(2)}</b> dari ${s.sks} SKS. Rincian KHS ada di Arsip Dokumen.</p><button class="btn" style="margin-top:10px" data-go="arsip">${ico('arch','sm')} Buka KHS di arsip</button>`:`<p class="mut">Semester ini masih rencana studi (${s.plan}, ${s.sks} SKS). Data akan terisi setelah KRS disetujui.</p>`}</section>
   <section class="card"><h2 class="h2" style="margin-bottom:8px">Tren IPS per semester</h2><div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik IPS semester 1 sampai 5" style="width:100%;min-width:420px;height:auto"><g stroke="var(--line)">${[3.6,3.8,4].map(v=>`<line x1="30" x2="${W-20}" y1="${py(v)}" y2="${py(v)}"/>`).join('')}</g><g fill="var(--mute)" font-size="11">${[3.6,3.8,4].map(v=>`<text x="0" y="${py(v)+4}">${v.toFixed(1)}</text>`).join('')}</g><path d="${line}" fill="none" stroke="var(--rose)" stroke-width="2.5"/>${pts.map((p,i)=>`<circle cx="${px(i)}" cy="${py(p.ips)}" r="${i===pts.length-1?6:4}" fill="${i===pts.length-1?'var(--card)':'var(--rose)'}" stroke="var(--rose)" stroke-width="2"/><text x="${px(i)}" y="${py(p.ips)-12}" text-anchor="middle" font-size="11" fill="var(--fg)">${p.ips.toFixed(2)}</text><text x="${px(i)}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--mute)">Sem ${p.n}</text>`).join('')}</svg></div><p class="sm mut">IPS semester 5 masih estimasi.</p></section>`;
@@ -541,7 +543,7 @@ document.addEventListener('click',e=>{
   else if(x==='dl')toast('Mengunduh '+a.dataset.n+' (simulasi).');
   else if(x==='prev')toast('Pratinjau '+a.dataset.n+' (simulasi).');
   else if(x==='upl')toast('Pilih berkas untuk diunggah (simulasi).');
-  else if(x==='pickday')toast('Tanggal '+a.dataset.n+' Oktober 2026');
+  else if(x==='pickday')toast('Tanggal '+a.dataset.n+' '+BLN[TODAY.getMonth()]+' '+TODAY.getFullYear());
   else if(x==='draft')toast('Draf tersimpan.');
   else if(x==='send'){const id=a.dataset.id,f=S.done['f'+id];if(!f||!f.ok){toast('Pilih berkas PDF (maks. 20 MB) dulu.');return}if(!$('#ori').checked){toast('Centang pernyataan orisinalitas dulu.');return}
     a.disabled=true;a.textContent='Mengirim…';setTimeout(()=>{TUGAS.find(t=>t.id==id).st='dikumpulkan';S._noscroll=1;render();toast('Tugas terkirim, '+tgl(TODAY)+' '+TODAY.toTimeString().slice(0,5)+' WIB.')},900)}
@@ -558,6 +560,9 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 function addModal(){const m=document.createElement('div');m.className='modal';m.innerHTML=`<form><h2 class="h2">Tambah tugas belajar</h2><label class="f">Judul<input id="nt" type="text" required></label><label class="f">Mata kuliah<select id="nm">${MK.map(x=>`<option value="${x.id}">${x.nama}</option>`).join('')}</select></label><label class="f">Prioritas<select id="np"><option>Normal</option><option>Tinggi</option></select></label><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="nc">Batal</button><button class="btn p">Simpan</button></div></form>`;document.body.append(m);$('#nt').focus();
   $('#nc').onclick=()=>m.remove();m.onclick=e=>{if(e.target===m)m.remove()};
   m.querySelector('form').onsubmit=e=>{e.preventDefault();const t=$('#nt').value.trim();if(!t)return;S.kanban.push({id:Date.now(),t,mk:+$('#nm').value,c:'todo',p:$('#np').value,d:'Baru'});m.remove();S._noscroll=1;render();toast('Tugas ditambahkan.')}}
+function clk(){TODAY=new Date();const c=$('#clk');if(c)c.textContent=HARI[TODAY.getDay()]+', '+tgl(TODAY)+' · '+TODAY.toTimeString().slice(0,8)+' WIB'}
+let _d=TODAY.toDateString(),_m=TODAY.getMinutes();
+setInterval(()=>{clk();if(S.auth&&['dashboard','kalender'].includes(route())&&(TODAY.getMinutes()!==_m||TODAY.toDateString()!==_d)){_m=TODAY.getMinutes();_d=TODAY.toDateString();rr()}},1000);
 /* init */
 const th=load('theme');if(th)setTheme(th);
 try{JSON.parse(load('tugas')||'[]').forEach(x=>{x.dl=new Date(x.dl);TUGAS.push(x)})}catch(e){}
